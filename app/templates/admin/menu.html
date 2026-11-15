@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Menu · Admin{% endblock %}
+{% block content %}
+<div class="row between">
+  <h1>Menu Items</h1>
+  <a class="btn" href="{{ url_for('admin.menu_form') }}">+ Add item</a>
+</div>
+<table class="table">
+  <tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Status</th><th></th></tr>
+  {% for item in items %}
+  <tr>
+    <td>{% if item.image_url %}<img class="thumb" src="{{ item.image_url }}" alt="">{% else %}🍽️{% endif %}</td>
+    <td><span class="veg {{ 'yes' if item.is_veg else 'no' }}"></span> {{ item.name }}</td>
+    <td>{{ item.category }}</td>
+    <td>₹{{ item.price }}</td>
+    <td>
+      <form method="post" action="{{ url_for('admin.toggle', item_id=item.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="tag {{ 'green' if item.available else 'red' }}">{{ 'Available' if item.available else 'Unavailable' }}</button>
+      </form>
+    </td>
+    <td><a href="{{ url_for('admin.menu_form', item_id=item.id) }}">Edit</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

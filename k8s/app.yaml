@@ -1,0 +1,87 @@
+# FoodExpress web app: 2 replicas behind a NodePort service on port 30090.
+# IMAGE_PLACEHOLDER and VERSION_PLACEHOLDER are replaced by Jenkins on every build.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: foodexpress-uploads
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: foodexpress
+  labels:
+    app: foodexpress
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate            # zero-downtime updates
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: foodexpress
+  template:
+    metadata:
+      labels:
+        app: foodexpress
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        - name: wait-for-mysql     # don't start the app until the DB accepts connections
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z mysql 3306; do echo waiting for mysql; sleep 3; done"]
+      containers:
+        - name: foodexpress
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - containerPort: 5000
+          env:
+            - name: APP_VERSION
+              value: "VERSION_PLACEHOLDER"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: foodexpress-secrets, key: DATABASE_URL }
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: foodexpress-secrets, key: SECRET_KEY }
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: foodexpress-secrets, key: ADMIN_PASSWORD }
+          resources:
+            requests: { memory: "128Mi", cpu: "100m" }
+            limits:   { memory: "384Mi" }
+          readinessProbe:          # only send traffic when app + DB are healthy
+            httpGet: { path: /health, port: 5000 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:           # restart the container if it stops responding
+            httpGet: { path: /health, port: 5000 }
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/app/static/uploads
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: foodexpress-uploads
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: foodexpress-service
+spec:
+  type: NodePort
+  selector:
+    app: foodexpress
+  ports:
+    - port: 80
+      targetPort: 5000
+      nodePort: 30090

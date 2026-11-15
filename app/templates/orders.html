@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}My Orders · FoodExpress{% endblock %}
+{% block content %}
+<h1>My Orders</h1>
+{% for o in orders %}
+<div class="panel order">
+  <div class="row between">
+    <strong>Order #{{ o.id }}</strong>
+    <span class="tag status-{{ o.status|lower|replace(' ', '-') }}">{{ o.status }}</span>
+  </div>
+  <p class="muted small">{{ o.created_at.strftime('%d %b %Y, %I:%M %p') }} UTC · {{ o.address }}</p>
+  <ul>
+    {% for i in o.items %}<li>{{ i.quantity }} × {{ i.name }} — ₹{{ i.price * i.quantity }}</li>{% endfor %}
+  </ul>
+  <div class="row between">
+    <strong>Total ₹{{ o.total }}</strong>
+    {% if o.status == 'Placed' %}
+    <form method="post" action="{{ url_for('shop.cancel', order_id=o.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn small danger">Cancel order</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<p>No orders yet. <a href="{{ url_for('shop.menu') }}">Order something tasty!</a></p>
+{% endfor %}
+{% endblock %}

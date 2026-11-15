@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <h1>Hungry? Order in minutes.</h1>
+  <p>Fresh food from our kitchen to your door. Free delivery above ₹499.</p>
+</section>
+
+<div class="chips">
+  <a class="chip {% if not active %}active{% endif %}" href="{{ url_for('shop.menu') }}">All</a>
+  {% for c in categories %}
+    <a class="chip {% if active == c %}active{% endif %}" href="{{ url_for('shop.menu', category=c) }}">{{ c }}</a>
+  {% endfor %}
+</div>
+
+<div class="grid">
+  {% for item in items %}
+  <div class="card {% if not item.available %}disabled{% endif %}">
+    {% if item.image_url %}
+      <img src="{{ item.image_url }}" alt="{{ item.name }}">
+    {% else %}
+      <div class="placeholder">🍽️</div>
+    {% endif %}
+    <div class="card-body">
+      <div class="row">
+        <span class="veg {{ 'yes' if item.is_veg else 'no' }}" title="{{ 'Veg' if item.is_veg else 'Non-veg' }}"></span>
+        <h3>{{ item.name }}</h3>
+      </div>
+      <p class="muted">{{ item.description }}</p>
+      <div class="row between">
+        <strong>₹{{ item.price }}</strong>
+        {% if item.available %}
+        <form method="post" action="{{ url_for('shop.add_to_cart', item_id=item.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn small">Add +</button>
+        </form>
+        {% else %}<span class="muted">Unavailable</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <p>No items in this category yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

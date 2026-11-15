@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if item else 'Add' }} item · Admin{% endblock %}
+{% block content %}
+<div class="panel auth">
+  <h1>{{ 'Edit' if item else 'Add' }} menu item</h1>
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Name</label><input name="name" value="{{ item.name if item else '' }}" required>
+    <label>Description</label><input name="description" value="{{ item.description if item else '' }}">
+    <label>Category</label><input name="category" value="{{ item.category if item else '' }}" placeholder="e.g. Biryani" required>
+    <label>Price (₹)</label><input type="number" name="price" min="1" value="{{ item.price if item else '' }}" required>
+    <label>Image (stored in AWS S3)</label><input type="file" name="image" accept="image/*">
+    <label class="check"><input type="checkbox" name="is_veg" {% if not item or item.is_veg %}checked{% endif %}> Vegetarian</label>
+    <label class="check"><input type="checkbox" name="available" {% if not item or item.available %}checked{% endif %}> Available</label>
+    <button class="btn full">Save</button>
+  </form>
+</div>
+{% endblock %}

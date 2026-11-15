@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Login · FoodExpress{% endblock %}
+{% block content %}
+<div class="panel auth">
+  <h1>Login</h1>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Email</label><input type="email" name="email" required>
+    <label>Password</label><input type="password" name="password" required>
+    <button class="btn full">Login</button>
+  </form>
+  <p class="muted">New here? <a href="{{ url_for('auth.register') }}">Create an account</a></p>
+</div>
+{% endblock %}
